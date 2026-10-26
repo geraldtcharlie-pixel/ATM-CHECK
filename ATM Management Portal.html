@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATM Check — Fleet Monitoring &amp; Predictive Maintenance</title>
+<style>
+  :root {
+    --bg: #E9ECEF;
+    --bg-panel: #FFFFFF;
+    --bg-panel-2: #F1F3F6;
+    --text: #14171F;
+    --text-muted: #4B5566;
+    --border: #C9CFD9;
+    --accent: #E8A23D;
+    --accent-text: #8A5A18;
+    --accent-contrast: #14171F;
+    --ok: #2F8F6B;
+    --danger: #B03A2E;
+    --feed-bg: #12151C;
+    --feed-border: #2A2116;
+    --feed-text: #E8A23D;
+    --feed-text-dim: #8f7a55;
+    --feed-ok: #57C29A;
+    --feed-danger: #E2685A;
+
+    --font-display: "Bahnschrift", "SF Compact Text", "Segoe UI Semibold", "Arial Narrow", sans-serif;
+    --font-body: "Segoe UI", "Segoe UI Variable", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "Cascadia Mono", "Consolas", "SFMono-Regular", Menlo, monospace;
+
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151C;
+      --bg-panel: #1B2029;
+      --bg-panel-2: #1F2530;
+      --text: #E7E9EE;
+      --text-muted: #9AA3B2;
+      --border: #2C3340;
+      --accent: #E8A23D;
+      --accent-text: #F5C784;
+      --accent-contrast: #14171F;
+      --ok: #57C29A;
+      --danger: #E2685A;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #12151C;
+    --bg-panel: #1B2029;
+    --bg-panel-2: #1F2530;
+    --text: #E7E9EE;
+    --text-muted: #9AA3B2;
+    --border: #2C3340;
+    --accent: #E8A23D;
+    --accent-text: #F5C784;
+    --accent-contrast: #14171F;
+    --ok: #57C29A;
+    --danger: #E2685A;
+    color-scheme: dark;
+  }
+
+  :root[data-theme="light"] {
+    --bg: #E9ECEF;
+    --bg-panel: #FFFFFF;
+    --bg-panel-2: #F1F3F6;
+    --text: #14171F;
+    --text-muted: #4B5566;
+    --border: #C9CFD9;
+    --accent: #E8A23D;
+    --accent-text: #8A5A18;
+    --accent-contrast: #14171F;
+    --ok: #2F8F6B;
+    --danger: #B03A2E;
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  a { color: var(--accent-text); }
+  a:focus-visible, button:focus-visible, .navlink:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* ===================== HEADER ===================== */
+
+  header.site {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 16px 32px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .brandmark {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-variation-settings: "wght" 700, "wdth" 85;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+  }
+
+  .brandmark .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+
+  nav.navlinks {
+    display: flex;
+    gap: 28px;
+  }
+
+  .navlink {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .navlink:hover { color: var(--text); }
+
+  @media (max-width: 720px) {
+    nav.navlinks { display: none; }
+  }
+
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    padding: 12px 22px;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--text-muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn, .feed-line, * { transition: none !important; animation: none !important; }
+  }
+
+  /* ===================== HERO ===================== */
+
+  .hero {
+    padding: 76px 0 64px;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 56px;
+    align-items: center;
+  }
+
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; }
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-variation-settings: "wght" 700, "wdth" 82;
+    line-height: 1.05;
+    margin: 14px 0 20px;
+  }
+
+  .hero-copy .lede {
+    font-size: 1.08rem;
+    color: var(--text-muted);
+    max-width: 46ch;
+    margin-bottom: 30px;
+  }
+
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+
+  /* --- Diagnostic feed panel: a physical device screen, stays dark in both themes --- */
+
+  .feed-panel {
+    background: var(--feed-bg);
+    border: 1px solid var(--feed-border);
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    color: var(--feed-text);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.28), 0 2px 0 rgba(255,255,255,0.03) inset;
+  }
+
+  .feed-perf {
+    height: 14px;
+    background-image: radial-gradient(circle, var(--bg) 3.5px, transparent 3.6px);
+    background-size: 16px 16px;
+    background-position: -8px center;
+  }
+
+  .feed-titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 18px;
+    border-bottom: 1px dashed var(--feed-border);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--feed-text-dim);
+  }
+
+  .feed-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .feed-live .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--feed-ok);
+    box-shadow: 0 0 0 0 rgba(87,194,154,0.6);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(87,194,154,0.55); }
+    70% { box-shadow: 0 0 0 7px rgba(87,194,154,0); }
+    100% { box-shadow: 0 0 0 0 rgba(87,194,154,0); }
+  }
+
+  .feed-body {
+    padding: 16px 18px 20px;
+    height: 300px;
+    overflow: hidden;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .feed-line {
+    display: flex;
+    gap: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    animation: feedIn 0.5s ease forwards;
+  }
+  @keyframes feedIn { to { opacity: 1; transform: translateY(0); } }
+
+  .feed-line .tid { color: var(--feed-text); font-weight: 700; }
+  .feed-line .sep { color: var(--feed-text-dim); }
+  .feed-line .metric { color: var(--feed-text-dim); }
+  .feed-line .tag-nominal { color: var(--feed-ok); font-weight: 700; }
+  .feed-line .tag-warning { color: var(--feed-text); font-weight: 700; }
+  .feed-line .tag-critical { color: var(--feed-danger); font-weight: 700; }
+
+  /* ===================== SECTIONS ===================== */
+
+  section { padding: 72px 0; }
+  .section-head { margin-bottom: 40px; max-width: 62ch; }
+  .section-head h2 { font-size: clamp(1.7rem, 3vw, 2.3rem); font-variation-settings: "wght" 700, "wdth" 85; margin: 10px 0 12px; }
+  .section-head p { color: var(--text-muted); font-size: 1rem; }
+
+  section.alt { background: var(--bg-panel-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+  /* --- Module log --- */
+
+  .module-log { display: flex; flex-direction: column; border-top: 1px solid var(--border); }
+
+  .module-row {
+    display: grid;
+    grid-template-columns: 90px 220px 1fr;
+    gap: 24px;
+    align-items: baseline;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  @media (max-width: 780px) {
+    .module-row { grid-template-columns: 64px 1fr; grid-template-areas: "code title" "desc desc"; }
+    .module-row .m-desc { grid-area: desc; margin-top: 4px; }
+    .module-row .m-code { grid-area: code; }
+    .module-row .m-title { grid-area: title; }
+  }
+
+  .m-code {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent-text);
+    letter-spacing: 0.04em;
+  }
+
+  .m-title {
+    font-family: var(--font-display);
+    font-variation-settings: "wght" 600, "wdth" 88;
+    font-size: 1.1rem;
+  }
+
+  .m-desc { color: var(--text-muted); font-size: 0.96rem; max-width: 56ch; }
+
+  /* --- System map (three components, one pipeline) --- */
+
+  .arch-scroll { overflow-x: auto; }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 720px;
+  }
+
+  @media (max-width: 780px) {
+    .arch-grid { grid-template-columns: 1fr; min-width: 0; }
+  }
+
+  .arch-cell {
+    background: var(--bg-panel);
+    padding: 26px 26px 24px;
+    position: relative;
+    border-right: 1px solid var(--border);
+  }
+  .arch-cell:last-child { border-right: none; }
+
+  @media (max-width: 780px) {
+    .arch-cell { border-right: none; border-bottom: 1px solid var(--border); }
+    .arch-cell:last-child { border-bottom: none; }
+  }
+
+  .arch-cell::after {
+    content: "\2192";
+    position: absolute;
+    right: -13px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    z-index: 2;
+  }
+  .arch-cell:last-child::after { content: none; }
+
+  @media (max-width: 780px) {
+    .arch-cell::after {
+      content: "\2193";
+      right: 50%;
+      top: auto;
+      bottom: -13px;
+      transform: translateX(50%);
+    }
+    .arch-cell:last-child::after { content: none; }
+  }
+
+  .arch-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+    margin-bottom: 10px;
+  }
+
+  .arch-cell h3 {
+    font-family: var(--font-display);
+    font-variation-settings: "wght" 650, "wdth" 86;
+    font-size: 1.12rem;
+    margin-bottom: 10px;
+  }
+
+  .arch-cell p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin: 0 0 14px;
+  }
+
+  .arch-meta {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    border-top: 1px dashed var(--border);
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .arch-meta b { color: var(--text); font-weight: 600; }
+
+  /* --- Spec strip --- */
+
+  .spec-scroll { overflow-x: auto; }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    min-width: 640px;
+  }
+
+  @media (max-width: 780px) {
+    .spec-grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+  }
+
+  .spec-cell {
+    background: var(--bg-panel);
+    padding: 20px 22px;
+  }
+
+  .spec-cell .k {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .spec-cell .v {
+    font-size: 0.98rem;
+    font-weight: 600;
+  }
+
+  /* --- Closing CTA --- */
+
+  .closing {
+    text-align: center;
+    padding: 90px 0 70px;
+  }
+  .closing h2 {
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    font-variation-settings: "wght" 700, "wdth" 82;
+    max-width: 20ch;
+    margin: 0 auto 16px;
+  }
+  .closing p { color: var(--text-muted); max-width: 50ch; margin: 0 auto 30px; }
+  .closing .hero-ctas { justify-content: center; }
+
+  footer.site {
+    border-top: 1px solid var(--border);
+    padding: 30px 0 40px;
+  }
+  .footer-row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .footer-row .brandmark { font-size: 0.95rem; }
+  footer.site a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-nav">
+    <div class="brandmark"><span class="dot"></span>ATM&nbsp;CHECK</div>
+    <nav class="navlinks">
+      <a class="navlink" href="#modules">Modules</a>
+      <a class="navlink" href="#system-map">System Map</a>
+      <a class="navlink" href="#under-the-hood">Under the Hood</a>
+      <a class="navlink" href="#contact">Deploy It</a>
+    </nav>
+    <a class="btn btn-accent" href="#contact">Request a demo</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow">Fleet Monitoring · Predictive Maintenance</div>
+        <h1>Know a machine is failing before it does.</h1>
+        <p class="lede">
+          ATM Check watches every terminal in the fleet — uptime, sensor health,
+          transaction flow, and fault codes — and flags trouble before it reaches
+          a customer at the machine.
+        </p>
+        <div class="hero-ctas">
+          <a class="btn btn-accent" href="#modules">View the module log</a>
+          <a class="btn btn-ghost" href="#under-the-hood">How it's built</a>
+        </div>
+      </div>
+
+      <div class="feed-panel" aria-hidden="true">
+        <div class="feed-perf"></div>
+        <div class="feed-titlebar">
+          <span>TERMINAL DIAGNOSTIC FEED</span>
+          <span class="feed-live"><span class="pulse"></span>LIVE</span>
+        </div>
+        <div class="feed-body" id="feed-body"></div>
+        <div class="feed-perf"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="modules">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Module Log</div>
+        <h2>Everything a fleet operator actually needs open at once.</h2>
+        <p>Eight modules, one login. Tagged the way the system tags them internally — not a marketing taxonomy.</p>
+      </div>
+
+      <div class="module-log">
+        <div class="module-row">
+          <div class="m-code">HLTH</div>
+          <div class="m-title">Terminal Health</div>
+          <div class="m-desc">Live status per machine — uptime, cassette levels, component wear — rolled into one glance per terminal.</div>
+        </div>
+        <div class="module-row">
+          <div class="m-code">OEE</div>
+          <div class="m-title">OEE Metrics</div>
+          <div class="m-desc">Availability × Performance × Quality, calculated the way a plant floor would, applied to a cash machine.</div>
+        </div>
+        <div class="module-row">
+          <div class="m-code">PRED</div>
+          <div class="m-title">Predictive Maintenance</div>
+          <div class="m-desc">Failure forecasts ahead of an actual outage, so a technician can be dispatched before a terminal goes dark.</div>
+        </div>
+        <div class="module-row">
+          <div class="m-code">ERR</div>
+          <div class="m-title">Error Logs</div>
+          <div class="m-desc">Every fault code, per terminal or fleet-wide, searchable back to the exact moment it fired.</div>
+        </div>
+        <div class="module-row">
+          <div class="m-code">TXN</div>
+          <div class="m-title">Transactions</div>
+          <div class="m-desc">Every withdrawal, filtered by date, terminal, or approval status — response codes decoded, not just numbers.</div>
+        </div>
+        <div class="module-row">
+          <div class="m-code">RPT</div>
+          <div class="m-title">Reports</div>
+          <div class="m-desc">One-click PDF or emailed report — from a fleet-wide summary down to a single terminal's transaction ledger.</div>
+        </div>
+        <div class="module-row">
+          <div class="m-code">RBAC</div>
+          <div class="m-title">Access Control</div>
+          <div class="m-desc">Admin, Operator, Viewer — a teller sees status, a technician sees everything, and nobody sees more than they should.</div>
+        </div>
+        <div class="module-row">
+          <div class="m-code">ONB</div>
+          <div class="m-title">Onboarding</div>
+          <div class="m-desc">Register a new terminal and it's live in the fleet immediately — no batch import, no waiting for the next sync.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="system-map">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">System Map</div>
+        <h2>The dashboard is the front door. There's a control room behind it.</h2>
+        <p>ATM Check ships as three separate services, each with its own login and its own job — not one monolith wearing three hats.</p>
+      </div>
+
+      <div class="arch-scroll">
+        <div class="arch-grid">
+          <div class="arch-cell">
+            <div class="arch-eyebrow">Component 01</div>
+            <h3>ATM Check Dashboard</h3>
+            <p>What an operator watches — terminal health, OEE, transactions, error logs, and reports, gated by role.</p>
+            <div class="arch-meta">
+              <span><b>Runs on</b> HTTPS :8443</span>
+              <span><b>This site</b></span>
+            </div>
+          </div>
+          <div class="arch-cell">
+            <div class="arch-eyebrow">Component 02</div>
+            <h3>ATM Prediction Engine</h3>
+            <p>What forecasts failures — scheduled scoring against terminal telemetry, and periodic retraining as new data lands.</p>
+            <div class="arch-meta">
+              <span><b>Runs as</b> ATMPredictionEngine</span>
+              <span><b>Runs as</b> ATMModelTraining</span>
+            </div>
+          </div>
+          <div class="arch-cell">
+            <div class="arch-eyebrow">Component 03</div>
+            <h3>ATM Engine Console</h3>
+            <p>What controls the engine — start, stop, and check both services, review recent predictions, trained model versions, and engine logs.</p>
+            <div class="arch-meta">
+              <span><b>Runs on</b> HTTPS :8444</span>
+              <span><b>Separate login</b> from the dashboard</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="under-the-hood">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Under the Hood</div>
+        <h2>Built to run on the hardware a bank already has.</h2>
+        <p>No cloud dependency required. It installs as a Windows service against an existing SQL Server instance.</p>
+      </div>
+
+      <div class="spec-scroll">
+        <div class="spec-grid">
+          <div class="spec-cell"><span class="k">Transport</span><span class="v">HTTPS, self-signed or CA cert</span></div>
+          <div class="spec-cell"><span class="k">Database</span><span class="v">SQL Server, parameterized queries throughout</span></div>
+          <div class="spec-cell"><span class="k">Auth</span><span class="v">Hashed credentials, session-based roles</span></div>
+          <div class="spec-cell"><span class="k">Deploy</span><span class="v">Windows Service, single-file installer</span></div>
+          <div class="spec-cell"><span class="k">Upgrades</span><span class="v">In-place upgrade installer, config preserved</span></div>
+          <div class="spec-cell"><span class="k">Reporting</span><span class="v">PDF export, SMTP email delivery</span></div>
+          <div class="spec-cell"><span class="k">Stack</span><span class="v">Python · Dash / Plotly · Flask sessions</span></div>
+          <div class="spec-cell"><span class="k">Access</span><span class="v">Role-gated routing, per-page and per-action</span></div>
+          <div class="spec-cell"><span class="k">Footprint</span><span class="v">Single terminal fleet or multi-branch, same build</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing" id="contact">
+    <div class="wrap">
+      <div class="eyebrow">Request a Demo</div>
+      <h2>See your own fleet on the screen, not a slide deck.</h2>
+      <p>A working build runs locally against a sample terminal fleet — happy to walk through it live or hand over a build to try.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-accent" href="mailto:geraldtcharlie@gmail.com?subject=ATM%20Check%20demo%20request">Email geraldtcharlie@gmail.com</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap footer-row">
+    <div class="brandmark"><span class="dot"></span>ATM&nbsp;CHECK</div>
+    <div>Built by Gerald Charlie — University of Zimbabwe, Academic Project, 2026.</div>
+    <div><a href="mailto:geraldtcharlie@gmail.com">geraldtcharlie@gmail.com</a></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var lines = [
+    { tid: "TID-0231", metric: "OEE 94.2%", tag: "NOMINAL", cls: "tag-nominal" },
+    { tid: "TID-0187", metric: "CASSETTE LOW", tag: "WARNING", cls: "tag-warning" },
+    { tid: "TID-0044", metric: "RESP 51 · Insufficient Funds", tag: "DECLINED", cls: "tag-warning" },
+    { tid: "TID-0301", metric: "SENSOR TEMP 41°C", tag: "NOMINAL", cls: "tag-nominal" },
+    { tid: "TID-0019", metric: "RESP 00 · Approved", tag: "OK", cls: "tag-nominal" },
+    { tid: "TID-0155", metric: "DISPENSER FAULT", tag: "CRITICAL", cls: "tag-critical" },
+    { tid: "TID-0092", metric: "PREDICTED FAILURE · 6d 4h", tag: "WATCH", cls: "tag-warning" },
+    { tid: "TID-0264", metric: "UPTIME 99.7%", tag: "NOMINAL", cls: "tag-nominal" },
+    { tid: "TID-0058", metric: "OEE 88.6%", tag: "NOMINAL", cls: "tag-nominal" },
+    { tid: "TID-0112", metric: "ERROR CAT: JAM", tag: "WARNING", cls: "tag-warning" }
+  ];
+
+  var body = document.getElementById("feed-body");
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var visible = 9;
+  var i = 0;
+
+  function renderLine(l) {
+    var row = document.createElement("div");
+    row.className = "feed-line";
+    row.innerHTML =
+      '<span class="tid">' + l.tid + '</span>' +
+      '<span class="sep">&#9656;</span>' +
+      '<span class="metric">' + l.metric + '</span>' +
+      '<span class="sep">&#9656;</span>' +
+      '<span class="' + l.cls + '">' + l.tag + '</span>';
+    return row;
+  }
+
+  function seed() {
+    for (var n = 0; n < visible; n++) {
+      body.appendChild(renderLine(lines[(i + n) % lines.length]));
+    }
+    i += visible;
+  }
+
+  function tick() {
+    var row = renderLine(lines[i % lines.length]);
+    body.appendChild(row);
+    i++;
+    while (body.children.length > visible) {
+      body.removeChild(body.firstChild);
+    }
+  }
+
+  seed();
+
+  if (!reduceMotion) {
+    setInterval(tick, 1900);
+  }
+})();
+</script>
+
+</body>
+</html>
